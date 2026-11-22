@@ -22,7 +22,11 @@
     "autorun": "node fixtures/autorun.mjs",
     "install-chrome": "node fixtures/chrome.mjs install",
     "clean-chrome": "node fixtures/chrome.mjs clean",
-    "clean": "rimraf dist dist-zip .wxt .output"
+    "clean": "rimraf dist dist-zip .wxt .output",
+    "bridge": "node bridge/server.mjs",
+    "bridge:cli": "node bridge/cli.mjs",
+    "bridge:mcp": "node bridge/mcp.mjs",
+    "test:bridge": "node --test bridge/test/server.test.mjs bridge/test/mcp.test.mjs"
   },
   "dependencies": {
     "@ai-sdk/amazon-bedrock": "5.0.123",
@@ -70,7 +74,7 @@
   },
   "packageManager": "pnpm@10.34.7",
   "engines": {
-    "node": ">=24.22.1",
+    "node": ">=24",
     "pnpm": "^10.34.7",
     "npm": "please-use-pnpm"
   },

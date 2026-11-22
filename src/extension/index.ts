@@ -1,5 +1,6 @@
 // The product's wiring in the service worker. Listener registration stays synchronous at worker start.
 import './panel';
+import { listenForBridge } from './bridge';
 import { addFirstShortcuts } from './first-run';
 import { listenForPanels } from './panel-port';
 import { RunManager } from './run-manager';
@@ -11,6 +12,7 @@ import { openWhatsNew } from '@src/store/whats-new';
 import { WHATS_NEW, releaseOf } from '@src/ui/whats-new';
 import { DATA_REQUEST } from '@src/ui/protocol';
 
+listenForBridge();
 export const runManager = new RunManager();
 listenForPanels(runManager);
 listenForSelections(runManager);

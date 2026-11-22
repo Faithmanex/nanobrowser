@@ -468,5 +468,12 @@
   "models.noReasoning": "不推理",
   "notice.reasoningDropped": "此模型不接受推理设置；将不使用该设置继续。",
   "notice.imagesDropped": "此模型不接受图片；将不使用图片继续。",
-  "notice.stopped": "已停止 · 接下来要 Nanobrowser 做什么？"
+  "notice.stopped": "已停止 · 接下来要 Nanobrowser 做什么？",
+  "general.localBridge": "本地智能体桥接",
+  "general.localBridgeHint": "允许运行在这台电脑上的智能体通过本机回环连接操作此浏览器。扩展只连接 127.0.0.1，页面数据不会离开这台电脑。",
+  "general.localBridgeEnable": "允许本地智能体",
+  "general.bridgeConnected": "已连接到 {url}，智能体现在可以打开并使用标签页。",
+  "general.bridgeWaiting": "正在等待 {url} 上的桥接服务。在 Nanobrowser 文件夹中运行 node bridge/server.mjs 启动它。",
+  "general.bridgeOff": "已关闭，任何智能体都无法访问浏览器。",
+  "general.localBridgeAgents": "桥接的 MCP 服务器和命令行工具位于 bridge/。其 README 中有一行配置，可供 Claude Code、Cursor 等 MCP 客户端使用。"
 }

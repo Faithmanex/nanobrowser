@@ -122,6 +122,23 @@ You can also set a site to **Allow** (go ahead in both modes), **Ask** (ask in b
 
 Then set it up and use it as in the Quick Start. To update, pull the latest source, run `pnpm build` again, and click the reload icon on the Nanobrowser card in the extensions page.
 
+## 🔌 Local agent bridge (this fork)
+
+This fork lets an agent running on your computer — Claude Code, Cursor, pi, or a script — drive the browser through
+the extension. It is a loopback bridge, not remote debugging: the extension polls `bridge/server.mjs` on
+`127.0.0.1:8788` and executes every action itself, through the same browser-control layer the side panel uses. Turn
+it on in **Settings → General → Local agent bridge**, then:
+
+```bash
+pnpm bridge                        # the relay (node bridge/server.mjs)
+node bridge/cli.mjs status         # a person, or a shell
+node bridge/cli.mjs mcp-config     # the config line for an MCP client
+```
+
+MCP clients get the layer's tools (`browser_snapshot`, `browser_click`, `browser_set`, …) from `bridge/mcp.mjs`, plus
+`browser_attach` and `browser_open` to choose a tab. Setup, the security model and the full command list are in
+[bridge/README.md](bridge/README.md).
+
 ## 🛠️ Development
 
 ```bash
@@ -132,6 +149,8 @@ pnpm lint              # check code style and import rules
 pnpm test              # run the unit tests
 pnpm install-chrome    # install Chrome for Testing, used by the browser tests
 pnpm autorun scenarios # run the browser tests on local test pages, without a window
+pnpm bridge            # the local agent bridge on 127.0.0.1:8788
+pnpm test:bridge       # the bridge's relay and MCP tests, no browser needed
 ```
 
 **How it works.** The agent sits on top of a **browser control layer**. The layer looks at the page, acts on it, and reports what happened. It has no AI model in it, so the same input always gives the same result. This makes the agent more reliable:

@@ -14,3 +14,10 @@ coverage
 .nanobrowser
 # Measurement runs write raw data here
 fixtures/.results
+
+# The local agent bridge's token, screenshots, log and tool cache (bridge/README.md)
+bridge/.token
+bridge/.shots
+bridge/.tools.json
+bridge/.server.log
+bridge/.server.pid

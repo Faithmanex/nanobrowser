@@ -38,6 +38,8 @@ export interface Settings {
   analyticsStats: boolean;
   /** A glowing border on the pages a working run acts on. */
   pageBorder: boolean;
+  /** The loopback bridge that lets an agent on this machine drive the browser (bridge/server.mjs). */
+  localBridge: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -57,6 +59,7 @@ export const DEFAULT_SETTINGS: Settings = {
   analyticsPing: true,
   analyticsStats: true,
   pageBorder: true,
+  localBridge: true,
 };
 
 /** Stored settings over the defaults, so a field added later has its default. */

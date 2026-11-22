@@ -14,7 +14,8 @@ This repository is the next version of Nanobrowser, an AI web automation Chrome 
 - **Built and maintained:** the browser control layer, a simple Chrome extension for testing it by hand (the test panel), fixture pages, unit tests, and the automated checks.
 - **Built and maintained:** the extension. Its first release has a side panel per tab, one agent loop, model providers through the Vercel AI SDK, the permission modes, shortcuts, attachments (images and text), upload into pages, saved files, voice input through OpenAI's or Gemini's voice model, three UI languages (English, Simplified Chinese, Traditional Chinese), a glowing border on the pages the agent works on (with a switch in Settings), anonymous analytics (a daily count of users and usage counts, both on until the user turns them off) with no identifier, and a card that asks a user who uses it often to rate it in the store.
 - **Not in the first release:** for example skills the model loads, site notes, saved memory, the in-page Stop pill, PDF and Office parsing, the text tool-call parser, scheduled tasks. Do not add any of these unless asked.
-- **Not in scope:** an MCP bridge, browsers other than Chrome and Edge, a planner and navigator design, several cooperating agents.
+- **Not in scope (upstream):** an MCP bridge, browsers other than Chrome and Edge, a planner and navigator design, several cooperating agents.
+- **This fork adds exactly one external entry point:** the local agent bridge (`bridge/`, `src/extension/bridge.ts`, `src/store/bridge.ts`, `bridge/README.md`). An agent on the same machine drives the layer through a loopback relay and MCP/CLI; the extension still executes every action. Do not add another entry point, and keep the bridge on this path.
 
 ## Fixed design constraints
 
@@ -22,7 +23,7 @@ These are settled and not open for redesign.
 
 For the layer:
 
-- **The layer is part of a Chrome extension, not a standalone tool.** It is not a runtime like agent-browser: no CLI, no daemon, no socket of its own, no launching or attaching to a browser, no remote CDP. Applications outside the extension will use it through an MCP bridge in future, and only that way. Do not add any other external entry point.
+- **The layer is part of a Chrome extension, not a standalone tool.** It is not a runtime like agent-browser: no CLI, no daemon, no socket of its own, no launching or attaching to a browser, no remote CDP. Applications outside the extension use it through the local agent bridge (`bridge/`), and only that way. Do not add any other external entry point.
 - **`chrome.debugger` is the only way to reach CDP.** The product is a Chrome extension. Do not add CDP over WebSocket, not even for tests.
 - **Puppeteer is the frame manager.** It detects frames, including out-of-process iframes, and tracks their sessions and navigation. Do not build a parallel frame or session registry from CDP events.
 - **Elements are never found through Puppeteer.** No selectors, `ElementHandle` clicks or selector-based `evaluate`. Element commands are raw CDP commands sent to the session of the frame Puppeteer reports.
@@ -54,7 +55,7 @@ For the agent and the extension:
 - **Page content is data, never instructions.** Text from pages reaches the model inside marked page-content boundaries; keep it that way.
 - **One agent**, not the old planner and navigator: one loop per conversation.
 - **No model tiers.** Every model gets the same agent and the same tools (`screenshot` only for vision models). There are no tool switches in the first release.
-- **Nothing outside the extension can drive the layer or the agent.** There is no MCP for now.
+- **Nothing outside the extension can drive the layer or the agent except the local agent bridge.** The bridge is a relay: the worker polls it, and every command runs in a session of its own inside the extension. It has no model and no CDP access of its own (`bridge/README.md`).
 - **The conversation is compacted automatically before the context window fills**, and every message the user sent is kept in full.
 - **Conversations cannot be imported** in the first release.
 
@@ -69,6 +70,7 @@ For the agent and the extension:
   - `index.ts` - The only entry other code may import
 - `src/test-panel/` - The layer's test panel (React); a developer-only entrypoint, opened on a tab with the `open-test-panel` command (unbound by default; bind it in `chrome://extensions/shortcuts`)
 - `src/background/` - The layer's test extension in the worker: the test panel's messages and `UserPrompt`, and the automated checks and scenario sets that `pnpm autorun` runs (`checks/`, `scenarios/`). The product's controller is created in `src/extension/layer.ts`
+- `bridge/` - The local agent bridge: the loopback relay (`server.mjs`), the CLI (`cli.mjs`), the MCP server (`mcp.mjs`), shared plumbing (`lib.mjs`), its tests and its README
 - `fixtures/` - Static test pages for the layer's and the extension's scenario sets, the fixture server (with a fake OpenAI-compatible model) and `autorun.mjs`
 - `README.md`, `CONTRIBUTING.md`, `PRIVACY.md`, `SECURITY.md`, `LICENSE`, `.github/` - The project's pages for users and contributors, the issue templates, the CI workflow and the file guard (`.github/workflows/`), which fails a pull request that changes a file only the maintainer changes. `PRIVACY.md` says what data leaves the browser and where it goes; a change to that updates it
 - `AGENTS.md` - This file; `CLAUDE.md` is a link to it
@@ -79,7 +81,7 @@ The extension:
 - `src/agent/` - Loop, hooks, agent tools, prompts, context management, run records
 - `src/llm/` - Providers, model profiles, usage, retries, overflow detection
 - `src/store/` - IndexedDB schema and stores, settings, keys
-- `src/extension/` - Wiring in the worker: RunManager, PromptBroker, permissions, TabScope, downloads, notifications
+- `src/extension/` - Wiring in the worker: RunManager, PromptBroker, permissions, TabScope, downloads, notifications, and the local agent bridge (`bridge.ts`)
 - `src/ui/` - Shared components, theme, the i18n runtime and the catalogues (`locales/`: English, Simplified and Traditional Chinese)
 - `src/side-panel/` - The chat UI
 - `src/options/` - The settings UI

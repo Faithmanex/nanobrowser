@@ -2,6 +2,7 @@
 // border, and the keyboard shortcut that opens the panel.
 import { useEffect, useState } from 'react';
 import { DEFAULT_SETTINGS, settingsStorage } from '@src/store/settings';
+import { DEFAULT_BRIDGE_STATUS, bridgeStatusStorage } from '@src/store/bridge';
 import type { Theme, UiLanguage } from '@src/store/settings';
 import { AutoNotice } from '@src/ui/auto-notice';
 import { Button, Input, Select, Switch } from '@src/ui/components';
@@ -51,6 +52,38 @@ function KeyboardShortcut() {
           {t('general.configure')}
         </Button>
       </SettingsRow>
+    </SettingsCard>
+  );
+}
+
+/** The loopback bridge an agent on this machine drives the browser through (bridge/README.md). */
+function LocalBridge() {
+  const settings = useStorage(settingsStorage, DEFAULT_SETTINGS);
+  const status = useStorage(bridgeStatusStorage, DEFAULT_BRIDGE_STATUS);
+  const state = !settings.localBridge
+    ? t('general.bridgeOff')
+    : status.connected
+      ? t('general.bridgeConnected', { url: status.url })
+      : t('general.bridgeWaiting', { url: status.url });
+  return (
+    <SettingsCard title={t('general.localBridge')} description={t('general.localBridgeHint')}>
+      <SettingsRow
+        label={t('general.localBridgeEnable')}
+        description={
+          <span className="flex flex-col gap-1">
+            <span>{state}</span>
+            {settings.localBridge && !status.connected && status.error ? (
+              <span className="break-words font-mono text-sm text-nb-muted">{status.error}</span>
+            ) : null}
+          </span>
+        }>
+        <Switch
+          aria-label={t('general.localBridgeEnable')}
+          checked={settings.localBridge}
+          onChange={on => void settingsStorage.set(s => ({ ...s, localBridge: on }))}
+        />
+      </SettingsRow>
+      <p className="mt-4 text-sm leading-relaxed text-nb-muted">{t('general.localBridgeAgents')}</p>
     </SettingsCard>
   );
 }
@@ -150,6 +183,7 @@ export function GeneralSection() {
           />
         </SettingsRow>
       </SettingsCard>
+      <LocalBridge />
       <KeyboardShortcut />
     </div>
   );

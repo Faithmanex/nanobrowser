@@ -468,5 +468,12 @@
   "models.noReasoning": "does not reason",
   "notice.reasoningDropped": "This model did not take the reasoning setting; continuing without it.",
   "notice.imagesDropped": "This model did not take images; continuing without them.",
-  "notice.stopped": "Stopped · What should Nanobrowser do instead?"
+  "notice.stopped": "Stopped · What should Nanobrowser do instead?",
+  "general.localBridge": "Local agent bridge",
+  "general.localBridgeHint": "Lets an agent on this computer drive this browser through a loopback connection. The extension connects out to 127.0.0.1 only; no page data leaves the machine.",
+  "general.localBridgeEnable": "Allow local agents",
+  "general.bridgeConnected": "Connected to {url}. Agents can open and use tabs now.",
+  "general.bridgeWaiting": "Waiting for the bridge at {url}. Start it with node bridge/server.mjs in the Nanobrowser folder.",
+  "general.bridgeOff": "Off. No agent can reach the browser.",
+  "general.localBridgeAgents": "The bridge's MCP server and CLI live in bridge/. Its README has the setup line for Claude Code, Cursor and other MCP clients."
 }
