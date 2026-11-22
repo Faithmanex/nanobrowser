@@ -53,7 +53,8 @@ Chrome restart reattaches on its own.
 
 ## An MCP client
 
-Point any MCP client at the stdio server. `node bridge/cli.mjs mcp-config` prints the JSON with absolute paths:
+Point any MCP client at the stdio server. This repository ships a `.mcp.json` for clients that read a project's
+config (Claude Code, for one); `node bridge/cli.mjs mcp-config` prints the same as JSON with absolute paths:
 
 ```json
 {
@@ -73,7 +74,8 @@ claude mcp add nanobrowser -- node "C:\Users\you\Documents\GitHub\nanobrowser\br
 ```
 
 Clients that are not MCP-capable can call the CLI from a shell (below). The MCP server starts `server.mjs` itself if
-nothing answers.
+nothing answers. Its `tools/list` asks the extension for the current catalogue; when the extension is not connected it
+answers from `bridge/.tools.json`, the last catalogue it saw.
 
 The tools are:
 

@@ -291,7 +291,6 @@ function saveShot(result) {
 }
 
 async function toolList() {
-  if (tools && Date.now() - toolsAt < 300_000) return { tools, stale: false, at: new Date(toolsAt).toISOString() };
   // Nothing is polling: answer from the cache at once instead of holding an MCP client's first call.
   if (!livePanels().length) {
     return tools

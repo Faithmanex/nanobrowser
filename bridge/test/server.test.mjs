@@ -121,7 +121,7 @@ test('an unanswered command is offered again to the same panel', async () => {
   assert.equal(answer.body.result.ok, true);
 });
 
-test('the tool catalogue is asked of the extension and then served from cache', async () => {
+test('the tool catalogue is asked of the extension', async () => {
   const waiting = poll('p4', 5000);
   const asking = get('/tools');
   const cmd = await waiting;
@@ -137,9 +137,7 @@ test('the tool catalogue is asked of the extension and then served from cache', 
   const first = await asking;
   assert.equal(first.status, 200);
   assert.equal(first.body.tools[0].name, 'snapshot');
-  const second = await get('/tools');
-  assert.equal(second.body.stale, false);
-  assert.equal(second.body.tools[0].name, 'snapshot');
+  assert.equal(first.body.stale, false);
 });
 
 test('events are kept with increasing ids', async () => {
