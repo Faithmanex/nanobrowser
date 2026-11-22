@@ -88,11 +88,13 @@ export async function tools({ ensure = true } = {}) {
  * Sends one command and waits for the extension's answer. `waitMs` is the bridge's patience; the HTTP timeout is
  * longer, so the bridge's own message (extension not connected, no answer) is what the caller sees.
  */
-export async function command(type, payload = {}, { waitMs = 90_000 } = {}) {
+export async function command(type, payload = {}, { waitMs = 90_000, panel } = {}) {
   await ensureServer();
+  // A panel id targets one extension instance (one Chrome profile) when more than one is polling.
+  const target = panel ?? process.env.NANOBROWSER_BRIDGE_PANEL ?? null;
   const answer = await request(
     '/cmd',
-    { method: 'POST', body: JSON.stringify({ type, ...payload, waitMs }) },
+    { method: 'POST', body: JSON.stringify({ type, ...payload, waitMs, ...(target ? { panel: target } : {}) }) },
     waitMs + 20_000,
   );
   return answer;

@@ -23,6 +23,7 @@ const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 let chrome;
 let fixtures;
 let failed = 0;
+let panelId;
 
 function check(name, fn) {
   return Promise.resolve()
@@ -86,6 +87,9 @@ async function cleanup() {
 try {
   if (!existsSync(join(DIST, 'manifest.json'))) throw new Error('dist/ is missing; run pnpm build first');
   await ensureServer();
+  // Other Chrome profiles may already be polling (a person's own browser). Record them, then target the instance this
+  // run launches by its panel id.
+  const known = new Set((await status()).panels.map(panel => panel.id));
   fixtures = await startServer();
   chrome = spawn(
     findChrome(),
@@ -110,18 +114,19 @@ try {
   chrome.stderr.on('data', chunk => chromeLog.push(chunk));
 
   await check('the extension connects to the bridge on its own', async () => {
-    const body = await waitFor(
+    panelId = await waitFor(
       async () => {
         const state = await status();
-        return state.extension ? state : null;
+        return state.panels.find(panel => panel.live && !known.has(panel.id))?.id ?? null;
       },
       60_000,
-      'the extension to poll',
+      'the launched extension to poll',
     );
-    assert.ok(body.panels.length >= 1);
+    assert.ok(panelId);
   });
 
-  const opened = await command('call', {
+  const cmd = (type, payload = {}) => command(type, payload, { panel: panelId });
+  const opened = await cmd('call', {
     tool: 'tabs',
     args: { action: 'open', url: `http://localhost:${FIXTURE_PORT}/form.html` },
   });
@@ -132,27 +137,27 @@ try {
     assert.equal(typeof tabId, 'number');
   });
 
-  const snapshot = await command('call', { tool: 'snapshot', args: { tabId, mode: 'interactive' } });
+  const snapshot = await cmd('call', { tool: 'snapshot', args: { tabId, mode: 'interactive' } });
   await check('snapshot prints refs and the page header', async () => {
     assert.equal(snapshot.result?.ok, true, snapshot.result?.text);
     assert.match(snapshot.result.text, /Observation form|tab \d+/);
     assert.match(snapshot.result.text, /\ba\d+\b/);
   });
 
-  const found = await command('call', { tool: 'find', args: { tabId, role: 'textbox', name: 'Full name' } });
+  const found = await cmd('call', { tool: 'find', args: { tabId, role: 'textbox', name: 'Full name' } });
   const ref = found.result?.data?.[0]?.ref;
   await check('find resolves a ref without a model', async () => {
     assert.equal(found.result?.ok, true, found.result?.text);
     assert.match(String(ref), /^a\d+$/);
   });
 
-  const set = await command('call', { tool: 'set', args: { tabId, target: { ref }, value: 'Grace Hopper' } });
+  const set = await cmd('call', { tool: 'set', args: { tabId, target: { ref }, value: 'Grace Hopper' } });
   await check('set writes the field and reads it back', async () => {
     assert.equal(set.result?.ok, true, set.result?.text);
     assert.match(set.result.text, /Grace Hopper/);
   });
 
-  const click = await command('call', {
+  const click = await cmd('call', {
     tool: 'click',
     args: { tabId, target: { role: 'button', name: 'More options' } },
   });
@@ -161,13 +166,13 @@ try {
     assert.equal(click.result.receipt?.dispatched, true);
   });
 
-  const read = await command('call', { tool: 'read', args: { tabId, maxChars: 600 } });
+  const read = await cmd('call', { tool: 'read', args: { tabId, maxChars: 600 } });
   await check('read returns the page text', async () => {
     assert.equal(read.result?.ok, true, read.result?.text);
     assert.match(read.result.text, /Observation form/);
   });
 
-  const shot = await command('call', { tool: 'screenshot', args: { tabId } });
+  const shot = await cmd('call', { tool: 'screenshot', args: { tabId } });
   await check('a screenshot is saved as a PNG', async () => {
     assert.equal(shot.result?.ok, true, shot.result?.text);
     assert.ok(shot.shot, 'the bridge should save the PNG');
@@ -177,13 +182,13 @@ try {
   });
 
   await check('the CLI drives the same session', async () => {
-    const out = cli('snap', '--mode', 'interactive');
+    const out = cli('snap', '--mode', 'interactive', '--panel', panelId);
     assert.match(out, /\ba\d+\b/);
     const state = cli('status');
     assert.match(state, /extension\s+connected/);
   });
 
-  const detached = await command('detach', { tabId });
+  const detached = await cmd('detach', { tabId });
   await check('detach releases the tab', async () => {
     assert.equal(detached.result?.ok, true, detached.error?.message ?? detached.result?.text);
     assert.ok(!(detached.result.tabs ?? []).includes(tabId));

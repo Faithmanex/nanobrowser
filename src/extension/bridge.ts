@@ -160,7 +160,12 @@ async function poll(t: string): Promise<BridgeCommand | null> {
   pollAbort = abort;
   const timer = setTimeout(() => abort.abort(), POLL_TIMEOUT_MS);
   try {
-    const query = new URLSearchParams({ panel: await ensurePanelId(), wait: String(POLL_WAIT_MS) });
+    const query = new URLSearchParams({
+      panel: await ensurePanelId(),
+      wait: String(POLL_WAIT_MS),
+      label: `nanobrowser ${chrome.runtime.getManifest().version}`,
+      version: chrome.runtime.getManifest().version,
+    });
     const response = await fetch(`${BRIDGE_URL}/ext/poll?${query}`, {
       headers: { 'x-bridge-token': t },
       signal: abort.signal,
@@ -404,6 +409,18 @@ async function execute(cmd: BridgeCommand): Promise<unknown> {
       const state = { tabId, url: tab?.url ?? '', title: tab?.title ?? '', activeTabId: session.activeTabId };
       void event('state', { ...state, tabs: session.tabIds() });
       return { ok: true, ...state, tabs: session.tabIds() };
+    }
+
+    case 'focus': {
+      // Make a tab the visible one and raise its window. The layer's own `tabs select` activates the tab but never
+      // focuses a window; an agent that wants the person to watch asks for this.
+      const tabId = tabIdOf(cmd) ?? session.activeTabId ?? (await activeTabId());
+      if (tabId === null) throw new Error('There is no tab to focus. Open one first, or pass a tabId.');
+      const tab = await chrome.tabs.get(tabId);
+      await chrome.tabs.update(tabId, { active: true });
+      await chrome.windows.update(tab.windowId, { focused: true });
+      if (session.hasTab(tabId)) session.setActive(tabId);
+      return { ok: true, tabId, windowId: tab.windowId, url: tab.url ?? '', title: tab.title ?? '' };
     }
 
     case 'detach': {

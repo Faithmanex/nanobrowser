@@ -80,7 +80,8 @@ answers from `bridge/.tools.json`, the last catalogue it saw.
 The tools are:
 
 - `browser_status` — is the extension connected?
-- `browser_list_tabs`, `browser_attach`, `browser_detach`, `browser_open` — choose the tab to work in.
+- `browser_list_tabs`, `browser_attach`, `browser_detach`, `browser_open`, `browser_focus` — choose the tab to
+  work in, and bring it to the front (the layer never focuses a window on its own).
 - `browser_snapshot`, `browser_find`, `browser_read` — observe; refs such as `a12` come from `browser_snapshot`.
 - `browser_click`, `browser_set`, `browser_fill_form`, `browser_type`, `browser_press`, `browser_hover`,
   `browser_scroll`, `browser_wait`, `browser_navigate`, `browser_upload`, `browser_handle_dialog`,
@@ -102,6 +103,7 @@ browser_click       { "target": { "ref": "a4" } }
 node bridge/cli.mjs status
 node bridge/cli.mjs tabs
 node bridge/cli.mjs open https://example.com
+node bridge/cli.mjs focus 12345
 node bridge/cli.mjs snap
 node bridge/cli.mjs find --role button --name Save
 node bridge/cli.mjs click a12
@@ -167,6 +169,10 @@ nothing else holds port 8788.
 
 **Port already in use.** `NANOBROWSER_BRIDGE_PORT` changes the server; the extension's port is fixed at 8788, so use
 that one. Find the holder with `netstat -ano | findstr 8788`.
+
+**More than one Chrome is polling.** `status` lists one panel id per extension instance (one Chrome profile). Every
+command then goes to whichever panel takes it first; pass `--panel <id>` on the CLI, or set
+`NANOBROWSER_BRIDGE_PANEL`, to choose one.
 
 **The token changed.** Delete `bridge/.token` and restart the server; the extension gets a 401, pairs again, and keeps
 going without a reload.

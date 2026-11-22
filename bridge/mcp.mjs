@@ -39,6 +39,16 @@ const BRIDGE_TOOLS = [
     },
   },
   {
+    name: 'browser_focus',
+    description:
+      'Bring a tab to the front: make it the visible tab of its window and raise that window, so the person can watch. The layer itself never focuses a window; this is the one call that does.',
+    inputSchema: {
+      type: 'object',
+      properties: { tabId: { type: 'number' } },
+      additionalProperties: false,
+    },
+  },
+  {
     name: 'browser_detach',
     description: "Stop acting on a tab and release Chrome's debugger from it.",
     inputSchema: {
@@ -126,6 +136,9 @@ async function callTool(name, args) {
   if (name === 'browser_list_tabs') return format(await command('tabs'));
   if (name === 'browser_attach') {
     return format(await command('attach', args?.tabId === undefined ? {} : { tabId: Number(args.tabId) }));
+  }
+  if (name === 'browser_focus') {
+    return format(await command('focus', args?.tabId === undefined ? {} : { tabId: Number(args.tabId) }));
   }
   if (name === 'browser_detach') {
     return format(await command('detach', args?.tabId === undefined ? {} : { tabId: Number(args.tabId) }));

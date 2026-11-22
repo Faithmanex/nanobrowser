@@ -31,6 +31,8 @@ import {
 const [name, ...rest] = process.argv.slice(2);
 const { positional, values } = parseArgs(rest);
 const json = values.json === true;
+// A command can be sent to one polling extension instance; status lists their ids.
+if (values.panel !== undefined) process.env.NANOBROWSER_BRIDGE_PANEL = String(values.panel);
 
 function fail(message, code = 1) {
   console.error(`nanobrowser: ${message}`);
@@ -68,6 +70,7 @@ const usage = `Nanobrowser bridge CLI
   tabs [--json]                  Chrome tabs, with the ones that can be attached
   attach [tabId]                 share a tab (default: the active one)
   detach [tabId]                 release a tab
+  focus [tabId]                  show a tab: activate it and raise its window
   open <url>                     open a tab and attach it
   snap [--mode interactive]      observe the page (refs come from here)
   find [--role r] [--name n] [--text t]
@@ -88,7 +91,7 @@ const usage = `Nanobrowser bridge CLI
   stop                           abort the running call
   mcp-config                     the config line for an MCP client
 
-Flags: --json (raw result), --tab <id> (the tab to act on).
+Flags: --json (raw result), --tab <id> (the tab to act on), --panel <id> (which browser, from status).
 `;
 
 try {
@@ -137,6 +140,13 @@ try {
       console.log(`attached tab ${r.tabId} · ${r.title || '(untitled)'} · ${r.url}`);
       console.log('now: node bridge/cli.mjs snap');
     }
+  } else if (name === 'focus') {
+    const tabId = positional[0] === undefined ? undefined : Number(positional[0]);
+    const answer = await command('focus', tabId === undefined ? {} : { tabId });
+    const error = errorOf(answer);
+    if (error) fail(error);
+    else
+      console.log(`focused tab ${answer.result.tabId} · ${answer.result.title || '(untitled)'} · ${answer.result.url}`);
   } else if (name === 'detach') {
     const tabId = positional[0] === undefined ? undefined : Number(positional[0]);
     printAnswer(await command('detach', tabId === undefined ? {} : { tabId }));
